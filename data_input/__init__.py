@@ -21,3 +21,22 @@ elif x > z:
     print ('x>z')
 else:
     print ('x a legkisebb')
+
+import statistics
+
+proba_lista = [1,8,6,9,5,4,15,2,17,22,41,11,32,17]
+
+x = statistics.mean(proba_lista)
+print('átlag=',x)
+
+y = statistics.median(proba_lista)
+print('középérték=',y)
+
+z = statistics.mode(proba_lista)
+print('módusz=',z)
+
+a = statistics.stdev(proba_lista)
+print('szórás=',a)
+
+b = statistics.variance(proba_lista)
+print('szórásnégyzet=',b)

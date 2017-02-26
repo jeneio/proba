@@ -3,13 +3,19 @@
 import csv
 import pprint as pp
 
+# fájlnév változatlan rész
 path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_20130901'
 
+# mérési adatok beolvasása
 with open('.'.join([path, 'ret'])) as f:
     reader = csv.reader(f, delimiter="\t")
     d = list(reader)
-ds = [list(x) for x in zip(*d)]
-
+ds = [list(x) for x in zip(*d)]  # transzponálás;http://stackoverflow.com/questions/21444338/transpose-nested-list-in-python
+# konverzió string -> float
+_ds = []
+for d in ds:
+    _ds.append([float(x) for x in d])
+#alternatíva, for-for
 # _ds = []
 # for d in ds:
 #     _ = []
@@ -17,10 +23,6 @@ ds = [list(x) for x in zip(*d)]
 #         _.append(float(x))
 #     _ds.append(_)
 #
-_ds = []
-for d in ds:
-    _ds.append([float(x) for x in d])
-
 
 
 with open('.'.join([path, 'tim'])) as f:

@@ -24,7 +24,7 @@ else:
 
 import statistics
 
-proba_lista = [1,8,6,9,5,4,15,2,17,22,41,11,32,17]
+proba_lista = [1,8,6,9,-5,4,15,-2,17,22,41,-11,-32,17]
 
 x = statistics.mean(proba_lista)
 print('átlag=',x)
@@ -40,3 +40,26 @@ print('szórás=',a)
 
 b = statistics.variance(proba_lista)
 print('szórásnégyzet=',b)
+
+proba_lista.append(22)
+
+proba_lista.insert(1,14)
+
+print (proba_lista)
+proba_lista.sort()
+print (proba_lista)
+
+absz_proba_lista = [abs(number) for number in proba_lista]
+print (absz_proba_lista)
+print (max(proba_lista))
+print (min(proba_lista))
+
+y = 5.234
+
+print (round(y))
+
+import math
+
+print (math.ceil(y))
+print (math.floor(y))
+

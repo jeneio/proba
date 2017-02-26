@@ -40,6 +40,8 @@ print(time.mktime(datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S").timetuple()
 
 # http://stackoverflow.com/questions/13728392/moving-average-or-running-mean
 # http://www.excel-easy.com/examples/moving-average.html
+# http://scipy-cookbook.readthedocs.io/
+# http://scipy-cookbook.readthedocs.io/
 def running_mean(l, N):
     sum = 0
     result = list( 0 for x in l)

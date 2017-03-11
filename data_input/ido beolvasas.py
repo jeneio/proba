@@ -9,6 +9,8 @@ with open('.'.join([path, 'tim'])) as f:
     reader = csv.reader(f, delimiter="\t")
     t = list(reader)
 
+print(t[1])
+
 # http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
 import time
 import datetime
@@ -20,7 +22,12 @@ print(time.mktime(datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S").timetuple()
 
 #a vizsgált időszak bevitele
 x = input('Mettől vizsgáljam? ')
-
+x = str(x)
+print (x)
 y = input('Meddig vizsgáljam? ')
+y = str(y)
 
-k = t.FindIndex(x)
+#a kezdő időpont sorszáma a listában (ez kell majd ahhoz, hogy tudjam melyik sor tartozik hőmérsékleti adatsorból az időponthoz)
+t1 = t.index(x)
+t2 = t.index(y)
+

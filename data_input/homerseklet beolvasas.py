@@ -11,12 +11,11 @@ with open('.'.join([path, 'ret'])) as f:
     print(d)
 ds = [list(x) for x in zip(*d)]  # transzponálás;http://stackoverflow.com/questions/21444338/transpose-nested-list-in-python
 # konverzió string -> float
-_ds = []
-for d in ds:
-    _ds.append([float(x) for x in d])
+
+
 elsokm = []
 
-for d in _ds:
-    elsokm.append([_ds[0],_ds[1],_ds[2],_ds[3]])
+for d in ds:
+    elsokm.append([ds[0],ds[1],ds[2],ds[3]])
 
-print (elsokm)
+print ('1.km: ',elsokm)

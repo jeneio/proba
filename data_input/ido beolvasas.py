@@ -31,3 +31,4 @@ y = str(y)
 t1 = t.index(x)
 t2 = t.index(y)
 
+# mi van ha nincs ilyen idopont?

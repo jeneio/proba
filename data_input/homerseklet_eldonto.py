@@ -4,6 +4,7 @@ elsokm = [22.5,22.4,22.1,22.9]
 
 #megadni, hogy mekkora hőmérsékleteltérést tekintünk azonos hőmérsékletnek
 y = input ('mekkora hőmérsékletkülönbséget tekintsek azonos hőmérsékletnek? ')
+y=int(y)
 x = max(elsokm)-min(elsokm)
 #eldönteni, hogy azonos-e a hőmérséklet a vizsgált km 4 pontján
 if x < y:

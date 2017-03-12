@@ -9,7 +9,7 @@ with open('.'.join([path, 'tim'])) as f:
     reader = csv.reader(f, delimiter="\t")
     t = list(reader)
 
-print(t[1])
+print('idő mintaformátum',t[0])
 
 # http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
 import time

@@ -28,10 +28,10 @@ import pprint as pp
 # pp.pprint(t)
 
 #a kezdő időpont sorszáma a listában (ez kell majd ahhoz, hogy tudjam melyik sor tartozik hőmérsékleti adatsorból az időponthoz)
-t1 = t.index(x)
-t2 = t.index(y)
+#t1 = t.index(x)
+#t2 = t.index(y)
 
-print(t1, t2)
+#print(t1, t2)
 
 # mi van ha nincs ilyen idopont?
 
@@ -48,7 +48,12 @@ print(t1, t2)
 import time
 import datetime
 print(time.mktime(datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S").timetuple()))
+x_szammal = time.mktime(datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S").timetuple())
 #t listában szereplő időpontok konvertálása számmá
 t_szammal = [time.mktime(datetime.datetime.strptime(y, "%Y-%m-%d %H:%M:%S").timetuple()) for x in t]
-print (t_szammal[2])
+print (t_szammal[1])
 #megtalálni x-hez (számformátumban) legközelebbi időpontot (számformátumban)
+x1 = min(t_szammal, key=lambda x:abs(x-x_szammal)) #http://stackoverflow.com/questions/12141150/from-list-of-integers-get-number-closest-to-a-given-value
+print (x1)
+
+#a sok printet azért használom, hogy ellenőrizni tudjam magam.

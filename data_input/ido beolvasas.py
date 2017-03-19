@@ -2,8 +2,8 @@ import csv
 import pprint as pp
 
 # fájlnév változatlan rész
-# path = 'C:\\Users\\Oszi\\Google Drive\\Diploma\\adatok\\eredeti\\hő\\M0_ho_20130901'
-path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_20130901'
+path = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\hő\\M0_ho_20130901'
+#path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_20130901'
 
 with open('.'.join([path, 'tim'])) as f:
     reader = csv.reader(f, delimiter="\t")
@@ -15,13 +15,6 @@ t = list(itertools.chain.from_iterable(t))
 
 print(t[1])  # ez mar egy string
 
-# # http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
-# import time
-# import datetime
-# s = '2013-09-01 00:00:01'
-# print(time.mktime(datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S").timetuple()))
-# s = '2013-09-01 00:00:11'
-# print(time.mktime(datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S").timetuple()))
 
 
 #a vizsgált időszak bevitele
@@ -48,3 +41,14 @@ print(t1, t2)
 # 2013-09-01 00:00:11
 # Meddig vizsgáljam? 2013-09-01 00:03:02
 # 1 18
+
+
+#nincs a keresett időpont, ezért a legközelebbi megkeresése
+# # http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
+import time
+import datetime
+print(time.mktime(datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S").timetuple()))
+#t listában szereplő időpontok konvertálása számmá
+t_szammal = [time.mktime(datetime.datetime.strptime(y, "%Y-%m-%d %H:%M:%S").timetuple()) for x in t]
+print (t_szammal[2])
+#megtalálni x-hez (számformátumban) legközelebbi időpontot (számformátumban)

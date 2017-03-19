@@ -18,11 +18,11 @@ print(t[1])  # ez mar egy string
 
 
 #a vizsgált időszak bevitele
-x = input('Mettől vizsgáljam? ')
-x = str(x)
-print (x)
-y = input('Meddig vizsgáljam? ')
-y = str(y)
+xb = input('Mettől vizsgáljam? ')
+xb = str(xb)
+
+yb = input('Meddig vizsgáljam? ')
+yb = str(yb)
 
 import pprint as pp
 # pp.pprint(t)
@@ -47,16 +47,22 @@ import pprint as pp
 # # http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
 import time
 import datetime
-print(time.mktime(datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S").timetuple()))
-x_szammal = time.mktime(datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S").timetuple())
+#kezdő és végidőpontok számmá konvertálása
+x_szammal = time.mktime(datetime.datetime.strptime(xb, "%Y-%m-%d %H:%M:%S").timetuple())
+y_szammal = time.mktime(datetime.datetime.strptime(yb, "%Y-%m-%d %H:%M:%S").timetuple())
 #t listában szereplő időpontok konvertálása számmá
-t_szammal = [time.mktime(datetime.datetime.strptime(y, "%Y-%m-%d %H:%M:%S").timetuple()) for x in t]
-print (t_szammal[1])
-#megtalálni x-hez (számformátumban) legközelebbi időpontot (számformátumban)
+t_szammal = [time.mktime(datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S").timetuple()) for x in t]
+#megtalálni x-hez, y-hoz (számformátumban) legközelebbi időpontot (számformátumban)
 x1 = min(t_szammal, key=lambda x:abs(x-x_szammal)) #http://stackoverflow.com/questions/12141150/from-list-of-integers-get-number-closest-to-a-given-value
-print (x1)
+y1 = min(t_szammal, key=lambda x:abs(x-y_szammal))
 
-#a sok printet azért használom, hogy ellenőrizni tudjam magam.
+#sorszámuk a listában
+t1 = t_szammal.index(x1)
+t2 = t_szammal.index(y1)
+
+print(t1, t2)
+#erre a két értékre lesz szükségünk szerintem, ezt kell majd felhasználnunk a többi fájlban
+
 
 #adott dátum milyen napra esett
 #http://stackoverflow.com/questions/9847213/which-day-of-week-given-a-date-python
@@ -81,7 +87,7 @@ def weekDay(year, month, day):
     # sum monthly and day offsets
     dayOfWeek += offset[month - 1] + (day - 1)
     dayOfWeek %= 7
-    dayOfWeek = int(dayOfWeek)
+    dayOfWeek = int(dayOfWeek) #ezt én raktam hozzá, mert float-nak érzékelte. a problémája így megoldódott
     return dayOfWeek, week[dayOfWeek]
 
 print (weekDay(2013, 9, 1))

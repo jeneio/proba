@@ -81,6 +81,7 @@ def weekDay(year, month, day):
     # sum monthly and day offsets
     dayOfWeek += offset[month - 1] + (day - 1)
     dayOfWeek %= 7
+    dayOfWeek = int(dayOfWeek)
     return dayOfWeek, week[dayOfWeek]
 
-print (weekDay(2013, 6, 15))
+print (weekDay(2013, 9, 1))

@@ -1,6 +1,7 @@
 import csv
 import itertools
 
+#ezzel csinálom meg az adatok rendezését
 def darabolo(be,nagydb,kisdb,kezdet):
     """eznegy fuggveny"""
     lista =[]
@@ -14,7 +15,8 @@ def darabolo(be,nagydb,kisdb,kezdet):
         lista.append(l2)
     return lista
 
-def homersekleteldonto (km,deltat):
+#ennek a segítségével döntöm majd el, hogy milyen hőmérséklet állapot van jelen (ez egyelőre az azonos hőmérséklethez tartozó)
+def homersekleteldontoazonos (km,deltat):
     igazhamis=[]
     for x in range(0,len(km)):
         igazhamis2=[]
@@ -28,9 +30,26 @@ def homersekleteldonto (km,deltat):
         igazhamis.append(igazhamis2)
     return igazhamis
 
+def homersekleteldontofelulalul (km,deltat):
+    igazhamis=[]
+    for x in range(0,len(km)):
+        igazhamis2=[]
+        for y in range (0,len(km[x])):
+            x1 = abs((km[x][y][0])-(km[x][y][3]))  # ABS!!!
+            y1 = abs((km[x][y][1])-(km[x][y][2]))
+    # eldönteni, hogy azonos-e a hőmérséklet a vizsgált km felső két pontján
+            if x1 and y1 <= deltat:
+                igazhamis2.append(True)
+            else:
+                igazhamis2.append(False)
+        igazhamis.append(igazhamis2)
+    return igazhamis
+
+#átlagszámítás
 def atlagszamito (atllista):
     return (sum(atllista)/len(atllista))
 
+#transzponálás kézileg
 def transzponalo (bemenolista):
     folista=[]
     l0=[]
@@ -53,6 +72,7 @@ def transzponalo (bemenolista):
     folista.append(l3)
     return folista
 
+#ezzel fogom csökkenteni a hőmérsékleti adatokat
 def dbcsokkento (idodb,forraslista):
     l0=[]
     for x in range(0,len(forraslista)):
@@ -91,6 +111,7 @@ ds = [list(x) for x in zip(*d)]  # transzponálás;http://stackoverflow.com/ques
 
 d_km = list(itertools.chain.from_iterable(d))
 
+#a bolvasott fájl rendezése km, időpont és szenzor szerint
 keresztmetszetlista=[]
 for keresztmetszet in range(0,21):
     km=darabolo(d_km,85,4,keresztmetszet)
@@ -102,15 +123,35 @@ for keresztmetszet in range(0,21):
 # keresztmetszetlista [keresztmetszet] [időpont(4érték)] [szenzorérték]
 # print(keresztmetszetlista[0][0][0])
 
-igazhamis=homersekleteldonto(keresztmetszetlista,1)
+# azt vizsgálom, hogy egy km-ben hányszor fordul elő, hogy azonosnak tekinthető a hőmérséklet
+#igazhamis=homersekleteldontoazonos(keresztmetszetlista,1)
+#szamlalo=0
+#for h in igazhamis[0]:
+#    if h==True:
+#        szamlalo=szamlalo+1
+#print(szamlalo)
+
+igazhamis=homersekleteldontofelulalul(keresztmetszetlista,1)
 szamlalo=0
 for h in igazhamis[0]:
     if h==True:
         szamlalo=szamlalo+1
-# print(szamlalo)
+print(szamlalo)
 
 #helyes: 1434
-print(len(dbcsokkento(6,keresztmetszetlista)[0][0]))
+#print(len(dbcsokkento(6,keresztmetszetlista)[0][0]))
 #helyes: 86
-print(len(dbcsokkento(100,keresztmetszetlista)[0][0]))
-print(dbcsokkento(6,keresztmetszetlista))
+#print(len(dbcsokkento(100,keresztmetszetlista)[0][0]))
+
+egypercesatlagT=[dbcsokkento(6,keresztmetszetlista)]
+egypercesatlag=transzponalo(egypercesatlagT)
+#print (egypercesatlagT[0][0])
+#print(len(dbcsokkento(6,keresztmetszetlista)))
+
+# azt vizsgálom, hogy egy km-ben hányszor fordul elő, hogy azonosnak tekinthető a hőmérséklet (az átlagolt, 1 perces listán)
+#igazhamis=homersekleteldontoazonos(egypercesatlag[0],1)
+#szamlalo=0
+#for h in igazhamis[0]:
+#    if h==False:
+#       szamlalo=szamlalo+1
+#print(szamlalo)

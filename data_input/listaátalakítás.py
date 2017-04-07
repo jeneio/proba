@@ -37,7 +37,22 @@ def homersekleteldontofelulalul (km,deltat):
         for y in range (0,len(km[x])):
             x1 = abs((km[x][y][0])-(km[x][y][3]))  # ABS!!!
             y1 = abs((km[x][y][1])-(km[x][y][2]))
-    # eldönteni, hogy azonos-e a hőmérséklet a vizsgált km felső két pontján
+    # eldönteni, hogy azonos-e a hőmérséklet a vizsgált km felső és alsó két pontján
+            if x1 and y1 <= deltat:
+                igazhamis2.append(True)
+            else:
+                igazhamis2.append(False)
+        igazhamis.append(igazhamis2)
+    return igazhamis
+
+def homersekleteldontobeki (km,deltat):
+    igazhamis=[]
+    for x in range(0,len(km)):
+        igazhamis2=[]
+        for y in range (0,len(km[x])):
+            x1 = abs((km[x][y][0])-(km[x][y][1]))  # ABS!!!
+            y1 = abs((km[x][y][2])-(km[x][y][3]))
+    # eldönteni, hogy azonos-e a hőmérséklet a vizsgált km be és kifolyási két pontján
             if x1 and y1 <= deltat:
                 igazhamis2.append(True)
             else:
@@ -52,25 +67,24 @@ def atlagszamito (atllista):
 #transzponálás kézileg
 def transzponalo (bemenolista):
     folista=[]
-    l0=[]
-    l1=[]
-    l2=[]
-    l3=[]
+    for x in range (0,len(bemenolista[0])):
+        folista.append([])
     for x in range (0,len(bemenolista)) :
         for y in range (0, len(bemenolista[x])):
-            if y==0:
-                l0.append(bemenolista[x][y])
-            elif y==1:
-                l1.append(bemenolista[x][y])
-            elif y == 2:
-                l2.append(bemenolista[x][y])
-            else:
-                l3.append(bemenolista[x][y])
-    folista.append(l0)
-    folista.append(l1)
-    folista.append(l2)
-    folista.append(l3)
+            folista[y].append(bemenolista[x][y])
     return folista
+
+def transzponalonagy (nagylista):
+    transzponalt=[]
+    for i in range (0,len(nagylista)):
+        folista=[]
+        for x in range (0,len(nagylista[0][0])):
+            folista.append([])
+        for x in range (0,len(nagylista[0])) :
+            for y in range (0, len(nagylista[i][x])):
+                folista[y].append(nagylista[i][x][y])
+        transzponalt.append(folista)
+    return transzponalt
 
 #ezzel fogom csökkenteni a hőmérsékleti adatokat
 def dbcsokkento (idodb,forraslista):
@@ -96,62 +110,56 @@ def dbcsokkento (idodb,forraslista):
         l0.append(l1)
     return l0
 
-# fájlnév változatlan rész
-# path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_20130901'
-path = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\hő\\M0_ho_20130901'
-#path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_20130901'
+def napvizsgalo (path):
+    # mérési adatok beolvasása
+    with open('.'.join([path, 'ret'])) as f:
+        reader = csv.reader(f, delimiter="\t")
+        d = list(reader)
 
-# mérési adatok beolvasása
-with open('.'.join([path, 'ret'])) as f:
-    reader = csv.reader(f, delimiter="\t")
-    d = list(reader)
+    ds = [list(x) for x in
+          zip(*d)]  # transzponálás;http://stackoverflow.com/questions/21444338/transpose-nested-list-in-python
 
-ds = [list(x) for x in zip(*d)]  # transzponálás;http://stackoverflow.com/questions/21444338/transpose-nested-list-in-python
+    d_km = list(itertools.chain.from_iterable(d))
+
+    # a bolvasott fájl rendezése km, időpont és szenzor szerint
+    keresztmetszetlista = []
+    for keresztmetszet in range(0, 21):
+        km = darabolo(d_km, 85, 4, keresztmetszet)
+        list_1 = [km[0], km[1], km[2]]
+        keresztmetszetlista.append(km)
+    # keresztmetszetlista [keresztmetszet] [időpont(4érték)] [szenzorérték]
+
+    egypercesatlagT = dbcsokkento(6, keresztmetszetlista)
+    egypercesatlag = transzponalonagy(egypercesatlagT)
+
+    # azt vizsgálom, hogy egy km-ben hányszor fordul elő, hogy azonosnak tekinthető a hőmérséklet (az átlagolt, 1 perces listán)
+    igazhamis = homersekleteldontoazonos(egypercesatlag, 1)
+    napieredmeny=[]
+    for g in range(0, len(igazhamis)):
+        szamlalo = 0
+        for h in igazhamis[g]:
+            if h == True:
+                szamlalo = szamlalo + 1
+        napieredmeny.append(szamlalo)
+
+    return napieredmeny
 
 
-d_km = list(itertools.chain.from_iterable(d))
+f=open('adat.csv','a')
 
-#a bolvasott fájl rendezése km, időpont és szenzor szerint
-keresztmetszetlista=[]
-for keresztmetszet in range(0,21):
-    km=darabolo(d_km,85,4,keresztmetszet)
-    list_1=[km[0],km[1],km[2]]
-    #for y in range(0,10):
-    #   print(km[y])
-        # print(len(km))
-    keresztmetszetlista.append(km)
-# keresztmetszetlista [keresztmetszet] [időpont(4érték)] [szenzorérték]
-# print(keresztmetszetlista[0][0][0])
 
-# azt vizsgálom, hogy egy km-ben hányszor fordul elő, hogy azonosnak tekinthető a hőmérséklet
-#igazhamis=homersekleteldontoazonos(keresztmetszetlista,1)
-#szamlalo=0
-#for h in igazhamis[0]:
-#    if h==True:
-#        szamlalo=szamlalo+1
-#print(szamlalo)
+for x in range (1,31):
+    # fájlnév változatlan rész
+    # path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_201309' + str(x)
 
-igazhamis=homersekleteldontofelulalul(keresztmetszetlista,1)
-szamlalo=0
-for h in igazhamis[0]:
-    if h==True:
-        szamlalo=szamlalo+1
-print(szamlalo)
+    if x < 10:
+        file_nev = "0" + str(x)
+    else:
+        file_nev= str(x)
+    path = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\hő\\M0_ho_201309' + file_nev
+    # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+    eredmeny=napvizsgalo(path)
+    string=",".join(map(str,eredmeny))+"\n"
+    f.write(string)
 
-#helyes: 1434
-#print(len(dbcsokkento(6,keresztmetszetlista)[0][0]))
-#helyes: 86
-#print(len(dbcsokkento(100,keresztmetszetlista)[0][0]))
-
-egypercesatlagT=[dbcsokkento(6,keresztmetszetlista)]
-egypercesatlag=transzponalo(egypercesatlagT)
-#print (egypercesatlagT[0][0])
-#print(len(dbcsokkento(6,keresztmetszetlista)))
-
-# azt vizsgálom, hogy egy km-ben hányszor fordul elő, hogy azonosnak tekinthető a hőmérséklet (az átlagolt, 1 perces listán)
-#igazhamis=homersekleteldontoazonos(egypercesatlag[0],1)
-#szamlalo=0
-#for h in igazhamis[0]:
-#    if h==False:
-#       szamlalo=szamlalo+1
-#print(szamlalo)
+f.close()

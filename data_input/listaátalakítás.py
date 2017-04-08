@@ -30,30 +30,34 @@ def homersekleteldontoazonos (km,deltat):
         igazhamis.append(igazhamis2)
     return igazhamis
 
-def homersekleteldontofelulalul (km,deltat):
+def homersekleteldontofelulalul (km,deltatazonos,deltatkulonbseg):
     igazhamis=[]
     for x in range(0,len(km)):
         igazhamis2=[]
         for y in range (0,len(km[x])):
             x1 = abs((km[x][y][0])-(km[x][y][3]))  # ABS!!!
             y1 = abs((km[x][y][1])-(km[x][y][2]))
+            z1 = abs(x1-y1)
     # eldönteni, hogy azonos-e a hőmérséklet a vizsgált km felső és alsó két pontján
-            if x1 and y1 <= deltat:
+            if x1 and y1 <= deltatazonos and z1 > deltatkulonbseg:
                 igazhamis2.append(True)
+        #ide bele kéne még rakni hogy x1 és y1 abs különbsége legyen nagyobb mint egy érték, mondjuk 1 fok
+        #működik is szerintem
             else:
                 igazhamis2.append(False)
         igazhamis.append(igazhamis2)
     return igazhamis
 
-def homersekleteldontobeki (km,deltat):
+def homersekleteldontobeki (km,deltatazonos, deltatkulonbseg):
     igazhamis=[]
     for x in range(0,len(km)):
         igazhamis2=[]
         for y in range (0,len(km[x])):
             x1 = abs((km[x][y][0])-(km[x][y][1]))  # ABS!!!
             y1 = abs((km[x][y][2])-(km[x][y][3]))
+            z1 = abs(x1 - y1)
     # eldönteni, hogy azonos-e a hőmérséklet a vizsgált km be és kifolyási két pontján
-            if x1 and y1 <= deltat:
+            if x1 and y1 <= deltatazonos and z1 > deltatkulonbseg:
                 igazhamis2.append(True)
             else:
                 igazhamis2.append(False)
@@ -141,12 +145,75 @@ def napvizsgalo (path):
             if h == True:
                 szamlalo = szamlalo + 1
         napieredmeny.append(szamlalo)
-
     return napieredmeny
 
+def napvizsgalofelulalul(path):
+    # mérési adatok beolvasása
+    with open('.'.join([path, 'ret'])) as f:
+        reader = csv.reader(f, delimiter="\t")
+        d = list(reader)
+
+    ds = [list(x) for x in
+          zip(*d)]  # transzponálás;http://stackoverflow.com/questions/21444338/transpose-nested-list-in-python
+
+    d_km = list(itertools.chain.from_iterable(d))
+
+    # a bolvasott fájl rendezése km, időpont és szenzor szerint
+    keresztmetszetlista = []
+    for keresztmetszet in range(0, 21):
+        km = darabolo(d_km, 85, 4, keresztmetszet)
+        list_1 = [km[0], km[1], km[2]]
+        keresztmetszetlista.append(km)
+    # keresztmetszetlista [keresztmetszet] [időpont(4érték)] [szenzorérték]
+
+    egypercesatlagT = dbcsokkento(6, keresztmetszetlista)
+    egypercesatlag = transzponalonagy(egypercesatlagT)
+
+    igazhamis = homersekleteldontofelulalul(egypercesatlag,1,0.5)
+    napieredmenyfelulalul=[]
+    for g in range(0, len(igazhamis)):
+        szamlalo = 0
+        for h in igazhamis[g]:
+            if h == True:
+                szamlalo = szamlalo + 1
+        napieredmenyfelulalul.append(szamlalo)
+
+    return napieredmenyfelulalul
+
+def napvizsgalobeki(path):
+    # mérési adatok beolvasása
+    with open('.'.join([path, 'ret'])) as f:
+        reader = csv.reader(f, delimiter="\t")
+        d = list(reader)
+
+    ds = [list(x) for x in
+          zip(*d)]  # transzponálás;http://stackoverflow.com/questions/21444338/transpose-nested-list-in-python
+
+    d_km = list(itertools.chain.from_iterable(d))
+
+    # a bolvasott fájl rendezése km, időpont és szenzor szerint
+    keresztmetszetlista = []
+    for keresztmetszet in range(0, 21):
+        km = darabolo(d_km, 85, 4, keresztmetszet)
+        list_1 = [km[0], km[1], km[2]]
+        keresztmetszetlista.append(km)
+    # keresztmetszetlista [keresztmetszet] [időpont(4érték)] [szenzorérték]
+
+    egypercesatlagT = dbcsokkento(6, keresztmetszetlista)
+    egypercesatlag = transzponalonagy(egypercesatlagT)
+
+    igazhamis = homersekleteldontobeki(egypercesatlag,1,0.5)
+    napieredmenybeki=[]
+    for g in range(0, len(igazhamis)):
+        szamlalo = 0
+        for h in igazhamis[g]:
+            if h == True:
+                szamlalo = szamlalo + 1
+        napieredmenybeki.append(szamlalo)
+
+    return napieredmenybeki
 
 f=open('adat.csv','a')
-
 
 for x in range (1,31):
     # fájlnév változatlan rész
@@ -159,6 +226,42 @@ for x in range (1,31):
     path = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\hő\\M0_ho_201309' + file_nev
     # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
     eredmeny=napvizsgalo(path)
+    string=",".join(map(str,eredmeny))+"\n"
+    f.write(string)
+
+f.close()
+
+f=open('adatfelulalul.csv','a')
+
+for x in range (1,31):
+    # fájlnév változatlan rész
+    # path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_201309' + str(x)
+
+    if x < 10:
+        file_nev = "0" + str(x)
+    else:
+        file_nev= str(x)
+    path = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\hő\\M0_ho_201309' + file_nev
+    # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+    eredmeny=napvizsgalofelulalul(path)
+    string=",".join(map(str,eredmeny))+"\n"
+    f.write(string)
+
+f.close()
+
+f=open('adatbeki.csv','a')
+
+for x in range (1,31):
+    # fájlnév változatlan rész
+    # path = 'C:\\Users\\X250-User\\Downloads\\ho\\M0_ho_201309' + str(x)
+
+    if x < 10:
+        file_nev = "0" + str(x)
+    else:
+        file_nev= str(x)
+    path = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\hő\\M0_ho_201309' + file_nev
+    # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+    eredmeny=napvizsgalobeki(path)
     string=",".join(map(str,eredmeny))+"\n"
     f.write(string)
 

@@ -136,6 +136,13 @@ def valami_beolvaso(path):
             reader = csv.reader(f, delimiter="\t")
             d = list(reader)
 
+        if '_saru_' in path:
+            d = [sor[0:24] for sor in d]
+            _ret = []
+            for sor in d:
+                _ret.append([float(x)-float(y) for x, y in zip(sor, d[0])])
+            d = _ret
+
         d_km = list(itertools.chain.from_iterable(d))
 
         # a bolvasott fájl rendezése km, időpont és szenzor szerint

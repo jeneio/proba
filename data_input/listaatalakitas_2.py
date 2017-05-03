@@ -195,7 +195,7 @@ def saru_beolvaso(path):
     d_saru = list(itertools.chain.from_iterable(d))
     saru = []
     # meghívom a darabolót az egy sorban levő adataimra.
-    # 24 érték tartozik egy időponthoz (+egy üres).
+    # 24 érték tartozik egy időponthoz .
     # 2 sarunk van.
     # az utolsó paraméter a darabolás kezdetének pozícióját határozza meg
     for pilon in range(0,12):
@@ -205,36 +205,71 @@ def saru_beolvaso(path):
 
 # előállítom minden pillanathoz minden szenzorra a delta T hőmérséklet különbséget a 0. időponthoz viszonyítva.
 def homersekletkulonbseg(lista):
-        lista = [sor[0:84] for sor in lista]
+        lista = [sor[0:84] for sor in lista] #egy időponthoz 84 érték tartozik (összes km összes szenzor)
         _ret = []
         for sor in lista:
             _ret.append([float(x)-float(y) for x, y in zip(sor, lista[0])])
         return _ret
 
 # nyúlások kiszámítása 0. időponthoz és fáljba írása és listába rakása a későbbi forgalom és hőmérséklet elmozdulások
-# szétválasztásához
+# szétválasztásához (ez kiderült később hogy csak az elméleti nyúlások meghatározására jó, a valóság más)
 def homelmozdulas (homlista,anyagallando,sarutav,path):
-    nyullista = []
+    nyullista = [] # létrehozom az eredménynek az üres listát amit mejd feltöltök adatokkal
     with open(path + '.ret', 'w') as f:
         for x in range (0,len(homlista)):
                 string1 = ""
-                kisnyullista = []
+                kisnyullista = [] # segédlista
                 for y in range (0, len(homlista[0])):
                     a = int(y / 4)
                     if HO_KM[a]:
                         # nyúlások előállítása, listába rakása és kiíratás előkészítése
-                        nyul = anyagallando*sarutav[a]*homlista[x][y]
-                        string = str(nyul) + " "
+                        nyul = anyagallando*sarutav[a]*homlista[x][y] # az init fájlban előállítottam a szükséges segédelemeket
+                        string = str(nyul) + " " # szünetet rakok az adatok közé, hogy be tudjam olvasni excelbe könnyen
                         string1 = string1 + string
-                        kisnyullista.append(nyul)
-                f.write(string1 + "\n")
-                nyullista.append(kisnyullista)
+                        kisnyullista.append(nyul) # összeállítom az allistát
+                f.write(string1 + "\n") # új sor a következő időponthoz tartozó adatoknak
+                nyullista.append(kisnyullista) # a teljes, rendezett adatsor összepakolása
     return nyullista
 
 # a forgalom és a hőmérséklet elmozdulásainak szétválasztására 1 perces módusz értékeket állítok elő mozgó átlaggal.
-# a kapott módusz értékek várhatóan csak a hőmérsékleti hatásokat tartalmazzák majd
-def modusz (bemenolista,idotartam):
-    
+# a kapott módusz értékek várhatóan csak a hőmérsékleti hatásokat tartalmazzák majd (egyszer excelben sikerült megcsinálni és jól
+# nézett ki, sajnos azóta mindig lefagyott)
+def modusz (bemenolista):
+    moduszlista=Counter(bemenolista)
+    return moduszlista.most_common(1)[0][0] # http://stackoverflow.com/questions/10797819/finding-the-mode-of-a-list
+
+# ez most amivel gond van. tegnap lefutott az utolsó 120 elem kivételével jól. valamit megváltoztattam amikor az
+# utolsó 120-ra is meg akartam csinálni és akkor valami elromlott, azóta nem készíti el a móduszokat. a 120 az egy
+# percnek megfelelő adat "ablak" a run3-ban jelenik meg a 120 értéke addig az időtartam változóról van szó gyakorlatilag
+def homerseklettenylegeselmozdulas (bemenolista,idotartam):
+    eredmeny=[]
+    helyiidotartam=idotartam
+    print(len(bemenolista)) # ezekkel ellenőrzöm hogy milyen szerkezetű a listám
+    """print(len(bemenolista[0]))
+    print(len(bemenolista[0])-idotartam)
+    print(bemenolista[0][158238:158240][0][0])"""
+    for x in range (0,len(bemenolista)): #0-12 pilonok
+        napipiller=[]
+        for y in range (0,len(bemenolista[x])): #0-158240 időpontok
+            if y < (len(bemenolista[0])-idotartam): # ezzel az a célom hogy menjen végig minden időponton,
+                                                    # egy percenként, azaz 120 adatonként, vegye a 0. elemeket
+                                                    # azok tartoznak a befolyási saruhoz) és keresse meg a móduszát,
+                                                    # majd mozgóátlagként haladjon tovább.
+                egypercesmoduszbe = modusz(bemenolista[x][y:y + idotartam][0]) # befolyási oldal
+                egypercesmoduszki = modusz(bemenolista[x][y:y + idotartam][1]) # ugyanez a kifolyási oldalra
+            else: # az utolsó 120 elem problémáját még nem tudtam megoldani, ezért erre ugyan azokat az értékeket
+                    # raktam egyelőre
+                egypercesmoduszbe = (bemenolista[x][len(bemenolista)-1][0])  # befolyási oldal
+                egypercesmoduszki = (bemenolista[x][len(bemenolista)-1][1]) # kifolyási oldali saruhoz tartozó adatok
+
+
+            napipiller.append([egypercesmoduszbe,egypercesmoduszki]) #feltöltöm az egy időponthoz kapott értékekkel
+                                                                    #  a listát
+        eredmeny.append(napipiller) # majd a teljes napi listát
+    print(len(eredmeny[0])) #158240-nek kell kijönnie darabszámra, ha jól dolgoztam.
+    return eredmeny
+
+
 
 
 def napvizsgalo(path):
@@ -306,7 +341,7 @@ def run():
             f.write(string)
 
 def run2():
-    for x in range (1,2):
+    for x in range (1,31):
         if x < 10:
             file_nev = "0" + str(x)
         else:
@@ -314,7 +349,7 @@ def run2():
         path = PATH_SARU + file_nev
         # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
         eredmeny = saru_beolvaso(path)
-        print (eredmeny[0][0])
+
 
         # kiíROM FÁJLBA AZ ELMOZDUÁS ÉRTÉKEKET
         with open('201309'+file_nev+'_elm.ret', 'w') as f:
@@ -324,6 +359,26 @@ def run2():
                     string = " ".join(map(str, eredmeny[y][z])) + " "
                     string1 = string1 + string
                 f.write(string1 +"\n")
+
+def run3():
+    for x in range(1, 2):
+        if x < 10:
+            file_nev = "0" + str(x)
+        else:
+            file_nev = str(x)
+        path = PATH_SARU + file_nev
+        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+        elmozdulasertekek = saru_beolvaso(path)
+        eredmeny = homerseklettenylegeselmozdulas(elmozdulasertekek, 120) #itt végzi a műveletet a beolvasott adatokra, 1 percre
+
+        # kiírom fájlba az eredményt
+        with open('201309' + file_nev + '_homelm.ret', 'w') as f:
+            for z in range(0, len(eredmeny[0])):
+                string1 = ""
+                for y in range(0, len(eredmeny)):
+                    string = " ".join(map(str, eredmeny[y][z])) + " "
+                    string1 = string1 + string
+                f.write(string1 + "\n")
 
 # hőmérsékletkülönbségek
 def run_deltaT():
@@ -367,4 +422,4 @@ def saruatlag():
 
 if __name__ == '__main__':
 
-    run2()
+    run3()

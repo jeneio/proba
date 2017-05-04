@@ -5,6 +5,7 @@ import itertools
 from __init__ import PATH_HO, PATH_SARU, PATH_NYUL, ACEL, SARU_TAV, HO_KM
 import pickle
 from collections import Counter
+from operator import sub
 
 
 # ezzel csinálom meg az adatok rendezését
@@ -195,7 +196,7 @@ def saru_beolvaso(path):
     d_saru = list(itertools.chain.from_iterable(d))
     saru = []
     # meghívom a darabolót az egy sorban levő adataimra.
-    # 24 érték tartozik egy időponthoz .
+    # 24 érték tartozik egy időponthoz (+egy üres).
     # 2 sarunk van.
     # az utolsó paraméter a darabolás kezdetének pozícióját határozza meg
     for pilon in range(0,12):
@@ -205,71 +206,80 @@ def saru_beolvaso(path):
 
 # előállítom minden pillanathoz minden szenzorra a delta T hőmérséklet különbséget a 0. időponthoz viszonyítva.
 def homersekletkulonbseg(lista):
-        lista = [sor[0:84] for sor in lista] #egy időponthoz 84 érték tartozik (összes km összes szenzor)
+        lista = [sor[0:84] for sor in lista] # egy időponthoz 84 adat tartozik (3*7 km *4 szenzor=84)
         _ret = []
         for sor in lista:
             _ret.append([float(x)-float(y) for x, y in zip(sor, lista[0])])
         return _ret
 
 # nyúlások kiszámítása 0. időponthoz és fáljba írása és listába rakása a későbbi forgalom és hőmérséklet elmozdulások
-# szétválasztásához (ez kiderült később hogy csak az elméleti nyúlások meghatározására jó, a valóság más)
+# szétválasztásához
+# ez később kiderült hogy nem valós eredményre vezet, mert szenzoronként határozza meg a nyúlást elméleti alapon,
+# nem veszi figyelembe a valós km-et
 def homelmozdulas (homlista,anyagallando,sarutav,path):
-    nyullista = [] # létrehozom az eredménynek az üres listát amit mejd feltöltök adatokkal
+    nyullista = [] #teljes nyúlásokat tartalmazó lista, ezt fogom feltölteni adatokkal
     with open(path + '.ret', 'w') as f:
         for x in range (0,len(homlista)):
-                string1 = ""
-                kisnyullista = [] # segédlista
+                string1 = "" # szóközzel fogom elválasztani az adatokat az exceles könnyebb beolvasáshoz
+                kisnyullista = [] #segédlista
                 for y in range (0, len(homlista[0])):
-                    a = int(y / 4)
+                    a = int(y / 4) # 4esével lépjen (ugyanazon szenzorokhoz tartozó érték kijelölése)
                     if HO_KM[a]:
                         # nyúlások előállítása, listába rakása és kiíratás előkészítése
-                        nyul = anyagallando*sarutav[a]*homlista[x][y] # az init fájlban előállítottam a szükséges segédelemeket
-                        string = str(nyul) + " " # szünetet rakok az adatok közé, hogy be tudjam olvasni excelbe könnyen
+                        nyul = anyagallando*sarutav[a]*homlista[x][y]
+                        string = str(nyul) + " "
                         string1 = string1 + string
-                        kisnyullista.append(nyul) # összeállítom az allistát
-                f.write(string1 + "\n") # új sor a következő időponthoz tartozó adatoknak
-                nyullista.append(kisnyullista) # a teljes, rendezett adatsor összepakolása
+                        kisnyullista.append(nyul) #feltöltöm az időpontokhoz tartozó adatokkal
+                f.write(string1 + "\n") # új sorba a következő időpont értékei
+                nyullista.append(kisnyullista)  # teljes lista összeállítása
     return nyullista
 
 # a forgalom és a hőmérséklet elmozdulásainak szétválasztására 1 perces módusz értékeket állítok elő mozgó átlaggal.
-# a kapott módusz értékek várhatóan csak a hőmérsékleti hatásokat tartalmazzák majd (egyszer excelben sikerült megcsinálni és jól
-# nézett ki, sajnos azóta mindig lefagyott)
+# a kapott módusz értékek várhatóan csak a hőmérsékleti hatásokat tartalmazzák majd
 def modusz (bemenolista):
     moduszlista=Counter(bemenolista)
-    return moduszlista.most_common(1)[0][0] # http://stackoverflow.com/questions/10797819/finding-the-mode-of-a-list
+    return moduszlista.most_common(1)[0][0]
 
-# ez most amivel gond van. tegnap lefutott az utolsó 120 elem kivételével jól. valamit megváltoztattam amikor az
-# utolsó 120-ra is meg akartam csinálni és akkor valami elromlott, azóta nem készíti el a móduszokat. a 120 az egy
-# percnek megfelelő adat "ablak" a run3-ban jelenik meg a 120 értéke addig az időtartam változóról van szó gyakorlatilag
+# a módusz előállításához vennem kell egy időtartamot, hogy mekkora adatmennyiséget tekintek egy "ablaknak".
+#  ez majd 120 adat lesz a run3-ban, azaz 1 percnyi adat
 def homerseklettenylegeselmozdulas (bemenolista,idotartam):
     eredmeny=[]
-    helyiidotartam=idotartam
-    print(len(bemenolista)) # ezekkel ellenőrzöm hogy milyen szerkezetű a listám
-    """print(len(bemenolista[0]))
-    print(len(bemenolista[0])-idotartam)
-    print(bemenolista[0][158238:158240][0][0])"""
-    for x in range (0,len(bemenolista)): #0-12 pilonok
+    #print(len(bemenolista)) #pillerek szama
+    #print(len(bemenolista[0])) #be- es kifolyasi oldal
+    #print(len(bemenolista[0][0])) #idopontok egy piller egy ertekere (be ES kifolyasi oldal)
+    helyidotartam = idotartam
+    for x in range (0,len(bemenolista)): #0-12 pillér
         napipiller=[]
-        for y in range (0,len(bemenolista[x])): #0-158240 időpontok
-            if y < (len(bemenolista[0])-idotartam): # ezzel az a célom hogy menjen végig minden időponton,
-                                                    # egy percenként, azaz 120 adatonként, vegye a 0. elemeket
-                                                    # azok tartoznak a befolyási saruhoz) és keresse meg a móduszát,
-                                                    # majd mozgóátlagként haladjon tovább.
-                egypercesmoduszbe = modusz(bemenolista[x][y:y + idotartam][0]) # befolyási oldal
-                egypercesmoduszki = modusz(bemenolista[x][y:y + idotartam][1]) # ugyanez a kifolyási oldalra
-            else: # az utolsó 120 elem problémáját még nem tudtam megoldani, ezért erre ugyan azokat az értékeket
-                    # raktam egyelőre
-                egypercesmoduszbe = (bemenolista[x][len(bemenolista)-1][0])  # befolyási oldal
-                egypercesmoduszki = (bemenolista[x][len(bemenolista)-1][1]) # kifolyási oldali saruhoz tartozó adatok
-
-
-            napipiller.append([egypercesmoduszbe,egypercesmoduszki]) #feltöltöm az egy időponthoz kapott értékekkel
-                                                                    #  a listát
-        eredmeny.append(napipiller) # majd a teljes napi listát
-    print(len(eredmeny[0])) #158240-nek kell kijönnie darabszámra, ha jól dolgoztam.
+        for y in range (0,len(bemenolista[x])): #0-158240 időpont
+            l0=[]
+            l1=[]
+            if y > len(bemenolista[x])-idotartam: # az utolsó ablak elemei
+                helyidotartam = helyidotartam -1
+            for idoindex in range(0,helyidotartam):
+                l0.append(bemenolista[x][y + idoindex][0])
+                l1.append(bemenolista[x][y + idoindex][1])
+            if l0 != [] and l1 != []:
+                egypercesmoduszbe = modusz(l0)
+                egypercesmoduszki = modusz(l1)
+            napipiller.append([egypercesmoduszbe,egypercesmoduszki])
+        helyidotartam = idotartam
+        eredmeny.append(napipiller)
+        napipiller=[]
+        print("Elkeszult piller: "+str(x+1))
+    # print(len(eredmeny[2]))
     return eredmeny
 
-
+#szétválasztom a hőmérsékleti és a forgalmi hatást ezzel majd, tehát két lista különbségére van szükségem elemenként
+def elmozdulaskulonbseg(eredetilista,kivonandolista):
+    eredmeny=[]
+    for x in range (0,len(eredetilista)): #0-12, x=egy piller
+        napipiller=[]
+        for y in range(0,len(eredetilista[x])): #0-158240 y=egy idopont
+            napipiller.append([er-ki for er,ki in zip(eredetilista[x][y],kivonandolista[x][y])]) # be- es kifolyasi
+                                                                             # oldali ertekek parba rendezese es kivonasa
+        eredmeny.append(napipiller)
+        print("Elkeszult piller kulonbseg: "+str(x+1))
+    return eredmeny
 
 
 def napvizsgalo(path):
@@ -361,22 +371,41 @@ def run2():
                 f.write(string1 +"\n")
 
 def run3():
-    for x in range(1, 2):
+    for x in range(1, 31):
         if x < 10:
             file_nev = "0" + str(x)
         else:
             file_nev = str(x)
         path = PATH_SARU + file_nev
         # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
-        elmozdulasertekek = saru_beolvaso(path)
-        eredmeny = homerseklettenylegeselmozdulas(elmozdulasertekek, 120) #itt végzi a műveletet a beolvasott adatokra, 1 percre
+        elmozdulasertekek = saru_beolvaso(path) # elmozdulást állít elő pozíciókból
+        elmozdulasertekekmodusz = homerseklettenylegeselmozdulas(elmozdulasertekek, 120) # móduszt állít elő egy perces
+                                                                 # adatmennyiségre, azaz a hőmérsékleti elmozdulást kapom
+        elmozdulasertekekkulonbseg=elmozdulaskulonbseg(elmozdulasertekek,elmozdulasertekekmodusz)
+                                                                # teljes elmozdulás-hőm.elmozdulás=forgalmi hatások
 
-        # kiírom fájlba az eredményt
-        with open('201309' + file_nev + '_homelm.ret', 'w') as f:
-            for z in range(0, len(eredmeny[0])):
+        #elso idopontra normalizalt ertekek kiíratása (ezek már készek nálam)
+        """with open('201309' + file_nev + '_homelmnorm.ret', 'w') as f:
+            for z in range(0, len(elmozdulasertekek[0])):
                 string1 = ""
-                for y in range(0, len(eredmeny)):
-                    string = " ".join(map(str, eredmeny[y][z])) + " "
+                for y in range(0, len(elmozdulasertekek)):
+                    string = " ".join(map(str, elmozdulasertekek[y][z])) + " "
+                    string1 = string1 + string
+                f.write(string1 + "\n")"""
+        # normalizalt ertekek modusza a hőmérsékletváltozásból adódó elmozdulások kiíratása
+        with open('201309' + file_nev + '_homelm.ret', 'w') as f:
+            for z in range(0, len(elmozdulasertekekmodusz[0])):
+                string1 = ""
+                for y in range(0, len(elmozdulasertekekmodusz)):
+                    string = " ".join(map(str, elmozdulasertekekmodusz[y][z])) + " "
+                    string1 = string1 + string
+                f.write(string1 + "\n")
+        #normalizalt ertekek es a modusz kulonbsege = a forgalombólból adódó elmozdulások kiíratása
+        with open('201309' + file_nev + '_forgelm.ret', 'w') as f:
+            for z in range(0, len(elmozdulasertekekkulonbseg[0])):
+                string1 = ""
+                for y in range(0, len(elmozdulasertekekkulonbseg)):
+                    string = " ".join(map(str, elmozdulasertekekkulonbseg[y][z])) + " "
                     string1 = string1 + string
                 f.write(string1 + "\n")
 

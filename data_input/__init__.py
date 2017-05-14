@@ -5,8 +5,9 @@ if jkb:
     PATH_HO = 'D:\\M0_nyers\\homerseklet\\M0_ho_201309'
 else:
     PATH_HO = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\ho\\M0_ho_201309'
-    PATH_SARU = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\saru\\M0_saru_201309'
+    PATH_SARU = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\saru\\M0_saru_201308'
     PATH_NYUL = 'C:\\Users\\Oszi\\Desktop\\adatok\\nyulas\\M0_nyul_201309'
+    PATH_ELM = 'C:\\Users\\Oszi\Desktop\\adatok\\elmozdulas\\'
 
 
 # segédlista a nyúlások számításához: ezek fixek, tartalmazzák hogy a deltaT hőmérsékleti adatsorból melyik

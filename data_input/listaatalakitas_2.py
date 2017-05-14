@@ -2,7 +2,7 @@
 
 import csv
 import itertools
-from __init__ import PATH_HO, PATH_SARU, PATH_NYUL, ACEL, SARU_TAV, HO_KM
+from __init__ import PATH_HO, PATH_SARU, PATH_NYUL, PATH_ELM, ACEL, SARU_TAV, HO_KM
 import pickle
 from collections import Counter
 from operator import sub
@@ -203,6 +203,36 @@ def saru_beolvaso(path):
         saru.append(darabolo(d_saru, 24, 2, 2*pilon))
 
     return saru
+# az elkészült elmozdulás adatsorokat használom, hogy ne számoljon olyan sokáig, ezek a fájlok úgyis elő vannak már állítva
+def elm_beolvaso(path):
+
+    # elmozdulasi adatok beolvasása
+    d = []
+    with open('.'.join([path, 'ret'])) as f:
+        reader = csv.reader(f, delimiter=" ")
+        for row in reader:
+            new = []
+            for item in row:
+                new.extend(item.split("\n"))
+            d.append(new)
+            #d = list(reader)
+    # elmozdulások előállítása minden nap 0. időponthoz viszonyítva
+    d = [sor[0:24] for sor in d]
+    _ret = []
+    for sor in d:
+        _ret.append([float(x)-float(y) for x, y in zip(sor, d[0])])
+    d = _ret
+
+    d_saru = list(itertools.chain.from_iterable(d))
+    saru = []
+    # meghívom a darabolót az egy sorban levő adataimra.
+    # 24 érték tartozik egy időponthoz (+egy üres).
+    # 2 sarunk van.
+    # az utolsó paraméter a darabolás kezdetének pozícióját határozza meg
+    for pilon in range(0,12):
+        saru.append(darabolo(d_saru, 24, 2, 2*pilon))
+
+    return saru
 
 # előállítom minden pillanathoz minden szenzorra a delta T hőmérséklet különbséget a 0. időponthoz viszonyítva.
 def homersekletkulonbseg(lista):
@@ -280,6 +310,22 @@ def elmozdulaskulonbseg(eredetilista,kivonandolista):
         eredmeny.append(napipiller)
         print("Elkeszult piller kulonbseg: "+str(x+1))
     return eredmeny
+# a futások előállítása (bármilyen hatásra)
+def futas (bemenolista):
+    napifutas=[]
+    for x in range (0, len(bemenolista)): # pillérek 1-12
+        napipillerfutas=[]
+        for y in range (0, len(bemenolista[x])): # időpont 0-158000körül
+            if y==0: # a 0. érték bevitele (amúgy ez mindig 0)
+                napipillerfutas.append(bemenolista[x][y])
+            else: # az i-edik elem (a=bemenolista[x][y]) és az (i-1)-dik elem (e=bemenolista[x][y-1]) különbségének az
+                #  abszolútértéke, ezt hozzáadva az összegzett lista előző eleméhez (ef=napipillerfutas[y-1])
+                # abs(a - e) + ef
+                k=[abs(a - e) + ef for a, e, ef in zip(bemenolista[x][y], bemenolista[x][y-1],napipillerfutas[y-1])]
+                napipillerfutas.append(k)
+        napifutas.append(napipillerfutas)
+        print("Elkeszult piller futas: " + str(x + 1))
+    return napifutas
 
 
 def napvizsgalo(path):
@@ -351,7 +397,7 @@ def run():
             f.write(string)
 
 def run2():
-    for x in range (1,31):
+    for x in range (31,32):
         if x < 10:
             file_nev = "0" + str(x)
         else:
@@ -362,7 +408,7 @@ def run2():
 
 
         # kiíROM FÁJLBA AZ ELMOZDUÁS ÉRTÉKEKET
-        with open('201309'+file_nev+'_elm.ret', 'w') as f:
+        with open('201308'+file_nev+'_elm.ret', 'w') as f:
             for z in range(0,len(eredmeny[0])):
                 string1 = ""
                 for y in range(0, len(eredmeny)):
@@ -371,7 +417,7 @@ def run2():
                 f.write(string1 +"\n")
 
 def run3():
-    for x in range(1, 31):
+    for x in range(31, 32):
         if x < 10:
             file_nev = "0" + str(x)
         else:
@@ -449,6 +495,75 @@ def saruatlag():
                 string = " ".join(map(str, s_atlag[4][x])) + "\n"
                 f.write(string)
 
+def run4():
+    # a napok külön azért kell, mert van hogy bizonyos napokon nem volt rögzítés (pl 2013.08.12-13)
+    napok=[1,2,3,4,5,6,7,8,9,10,11,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+
+    kiirolistaforg=[] #futások kiírásához
+    kiirolistahom=[]
+    # forgalmi futás összegzés és fájlkiíratás
+    for x in napok:
+        if x < 10:
+            file_nev = "0" + str(x)
+        else:
+            file_nev = str(x)
+        path = PATH_ELM + '201308' + file_nev + '_forgelm'
+        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+        elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
+        forgalmifutas=futas(elmozdulasertekek)
+        #a futasok kiíratása (nálam már elkészítve)
+        """with open('201308' + file_nev + '_forgfutas.ret', 'w') as f:
+            for z in range(0, len(forgalmifutas[0])):
+                string1 = ""
+                for y in range(0, len(forgalmifutas)):
+                    string = " ".join(map(str, forgalmifutas[y][z])) + " "
+                    string1 = string1 + string
+                f.write(string1 + "\n")"""
+        kiirolista1=[] # a kiíratáshoz előkészítő lista
+        for piller in range (0, len(forgalmifutas)):
+            kiirolista1.append(forgalmifutas[piller][len(forgalmifutas[piller])-1])
+        kiirolistaforg.append(kiirolista1)
+    # ez mindig az utolsó időponthoz tartozó futást írja ki, ezáltal a napi összfutást a forgalomból, sarunként.
+    with open('201308' + file_nev + '_forgfutasnapi.ret', 'w') as f:
+        for z in range(0, len(kiirolistaforg[0])):
+            string1 = ""
+            for y in range(0, len(kiirolistaforg)):
+                string = " ".join(map(str, kiirolistaforg[y][z])) + " "
+                string1 = string1 + string
+            f.write(string1 + "\n")
+    # homérsékleti futás összegzés és fájlkiíratás (ugyanúgy mint az előbb futásra)
+    for x in napok:
+        if x < 10:
+            file_nev = "0" + str(x)
+        else:
+            file_nev = str(x)
+        path = PATH_ELM + '201308'+ file_nev + '_homelm'
+        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+        elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
+        homfutas=futas(elmozdulasertekek)
+        #a futasok kiíratása
+        """with open('201309' + file_nev + '_homfutas.ret', 'w') as f:
+            for z in range(0, len(homfutas[0])):
+                string1 = ""
+                for y in range(0, len(homfutas)):
+                    string = " ".join(map(str, homfutas[y][z])) + " "
+                    string1 = string1 + string
+                f.write(string1 + "\n")"""
+        kiirolista2 = []
+        for piller in range(0, len(homfutas)):
+            kiirolista2.append(homfutas[piller][len(homfutas[piller])-1])
+        kiirolistahom.append(kiirolista2)
+    # ez mindig az utolsó időponthoz tartozó futást írja ki, ezáltal a napi összfutást a hőmérsékletből, sarunként.
+    with open('201308' + file_nev + '_homfutasnapi.ret', 'w') as f:
+        for z in range(0, len(kiirolistahom[0])):
+            string1 = ""
+            for y in range(0, len(kiirolistahom)):
+                string = " ".join(map(str, kiirolistahom[y][z])) + " "
+                string1 = string1 + string
+            f.write(string1 + "\n")
+
+
+
 if __name__ == '__main__':
 
-    run3()
+    run4()

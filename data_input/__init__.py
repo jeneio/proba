@@ -3,6 +3,7 @@ jkb = False
 
 if jkb:
     PATH_HO = 'D:\\M0_nyers\\homerseklet\\M0_ho_201309'
+    PATH_SARU = 'D:\\M0_nyers\\saru\\M0_saru_201309'
 else:
     PATH_HO = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\ho\\M0_ho_201309'
     PATH_SARU = 'C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\saru\\M0_saru_201308'

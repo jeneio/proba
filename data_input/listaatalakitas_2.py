@@ -403,7 +403,6 @@ def run2():
         else:
             file_nev = str(x)
         path = PATH_SARU + file_nev
-        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
         eredmeny = saru_beolvaso(path)
 
 
@@ -416,44 +415,67 @@ def run2():
                     string1 = string1 + string
                 f.write(string1 +"\n")
 
+#ez a program szolgál a nyers (pozíció) adatokból az elmozdulások létrehozására ( "A" rész )
+# a két hatás szétválasztására: "B" rész: hőmérsékleti elmozdulás
+#                               "C" rész: forgalomból keletkező elmozdulás
+# beviteli adatok (kézzel beírni): vizsgált év, hónap = vizsgaltevhonap
+#                                  vizsgált időablak a módusz előállításához, másodpercben = vizsgaltidoablak
+#                                  __init__ fájlban a PATH_SARU elérési útvonala a vizsgált év, hónap dátumára végződjön!
 def run3():
-    for x in range(31, 32):
-        if x < 10:
-            file_nev = "0" + str(x)
-        else:
-            file_nev = str(x)
-        path = PATH_SARU + file_nev
-        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
-        elmozdulasertekek = saru_beolvaso(path) # elmozdulást állít elő pozíciókból
-        elmozdulasertekekmodusz = homerseklettenylegeselmozdulas(elmozdulasertekek, 120) # móduszt állít elő egy perces
-                                                                 # adatmennyiségre, azaz a hőmérsékleti elmozdulást kapom
-        elmozdulasertekekkulonbseg=elmozdulaskulonbseg(elmozdulasertekek,elmozdulasertekekmodusz)
-                                                                # teljes elmozdulás-hőm.elmozdulás=forgalmi hatások
+    # a vizsgált év és hónap megadása, módusz bevitele
+    vizsgaltevhonap = 201308
+    vizsgaltidoablak = 180
+    # a mintavétel gyakorisága fél másodperces, ezért beszorzom kettővel.
+    vizsgaltidoablak=vizsgaltidoablak*2
+    # figyelmeztet, hogy jó fájlból dolgozik-e
+    if PATH_SARU =='C:\\Users\\Oszi\\Desktop\\adatok\\eredeti\\saru\\M0_saru_'+str(vizsgaltevhonap):
+        print("A forrásfájl elérési útja helyesen van megadva.")
+    else:
+        print("A forrásfájl elérési útja helytelen, a dátum nem egyezik! Ellenőrizd a dátumot!")
+    # a napok külön azért kell, hogyha csak pár nap érdekel, azt külön meg lehessen adni (teljes hónap vizsgálata esetén
+    # figyelni kell arra, hogy a vizsgált hónap hány napos), akkor a 'for x in napok' kell aktívvá tenni 4 sorral lejjebb
+    napok = [1,18,31]
 
-        #elso idopontra normalizalt ertekek kiíratása (ezek már készek nálam)
-        """with open('201309' + file_nev + '_homelmnorm.ret', 'w') as f:
-            for z in range(0, len(elmozdulasertekek[0])):
-                string1 = ""
-                for y in range(0, len(elmozdulasertekek)):
-                    string = " ".join(map(str, elmozdulasertekek[y][z])) + " "
-                    string1 = string1 + string
-                f.write(string1 + "\n")"""
-        # normalizalt ertekek modusza a hőmérsékletváltozásból adódó elmozdulások kiíratása
-        with open('201309' + file_nev + '_homelm.ret', 'w') as f:
-            for z in range(0, len(elmozdulasertekekmodusz[0])):
-                string1 = ""
-                for y in range(0, len(elmozdulasertekekmodusz)):
-                    string = " ".join(map(str, elmozdulasertekekmodusz[y][z])) + " "
-                    string1 = string1 + string
-                f.write(string1 + "\n")
-        #normalizalt ertekek es a modusz kulonbsege = a forgalombólból adódó elmozdulások kiíratása
-        with open('201309' + file_nev + '_forgelm.ret', 'w') as f:
-            for z in range(0, len(elmozdulasertekekkulonbseg[0])):
-                string1 = ""
-                for y in range(0, len(elmozdulasertekekkulonbseg)):
-                    string = " ".join(map(str, elmozdulasertekekkulonbseg[y][z])) + " "
-                    string1 = string1 + string
-                f.write(string1 + "\n")
+    for x in range(1,32):
+    #for x in (napok):
+        try:
+            if x < 10:
+                file_nev = "0" + str(x)
+            else:
+                file_nev = str(x)
+            path = PATH_SARU + file_nev
+            elmozdulasertekek = saru_beolvaso(path) # elmozdulást állít elő pozíciókból
+            elmozdulasertekekmodusz = homerseklettenylegeselmozdulas(elmozdulasertekek, vizsgaltidoablak) # móduszt állít elő vizsgaltidoablek/60 perces
+                                                                     # adatmennyiségre, azaz a hőmérsékleti elmozdulást kapom
+            elmozdulasertekekkulonbseg=elmozdulaskulonbseg(elmozdulasertekek,elmozdulasertekekmodusz)
+                                                                    # teljes elmozdulás-hőm.elmozdulás=forgalmi hatások
+
+            # "A" rész: elso idopontra normalizalt ertekek kiíratása = elmozdulások (ezek már készek nálam)
+            """with open( vizsgaltevhonap + file_nev + '_elm.ret', 'w') as f:
+                for z in range(0, len(elmozdulasertekek[0])):
+                    string1 = ""
+                    for y in range(0, len(elmozdulasertekek)):
+                        string = " ".join(map(str, elmozdulasertekek[y][z])) + " "
+                        string1 = string1 + string
+                    f.write(string1 + "\n")"""
+            # "B" rész: normalizalt ertekek modusza a hőmérsékletváltozásból adódó elmozdulások kiíratása
+            with open(vizsgaltevhonap + file_nev + '_homelm.ret', 'w') as f:
+                for z in range(0, len(elmozdulasertekekmodusz[0])):
+                    string1 = ""
+                    for y in range(0, len(elmozdulasertekekmodusz)):
+                        string = " ".join(map(str, elmozdulasertekekmodusz[y][z])) + " "
+                        string1 = string1 + string
+                    f.write(string1 + "\n")
+            # "C" rész: normalizalt ertekek es a modusz kulonbsege = a forgalombólból adódó elmozdulások kiíratása
+            with open(vizsgaltevhonap + file_nev + '_forgelm.ret', 'w') as f:
+                for z in range(0, len(elmozdulasertekekkulonbseg[0])):
+                    string1 = ""
+                    for y in range(0, len(elmozdulasertekekkulonbseg)):
+                        string = " ".join(map(str, elmozdulasertekekkulonbseg[y][z])) + " "
+                        string1 = string1 + string
+                    f.write(string1 + "\n")
+        except Exception:
+            print("Az adott napra nincsenek adatok: " + str(x))
 
 # hőmérsékletkülönbségek
 def run_deltaT():
@@ -463,7 +485,6 @@ def run_deltaT():
         else:
             file_nev = str(x)
         path = PATH_HO + file_nev
-        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
         # mérési adatok beolvasása
         with open('.'.join([path, 'ret'])) as f:
             reader = csv.reader(f, delimiter="\t")
@@ -482,7 +503,6 @@ def saruatlag():
     else:
         file_nev = str(x)
     path = PATH_SARU + file_nev
-    # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
     eredmeny = saru_beolvaso(path)
     s_atlagt = dbcsokkento(20,eredmeny)
     s_atlag=transzponalonagy(s_atlagt)
@@ -495,66 +515,73 @@ def saruatlag():
                 string = " ".join(map(str, s_atlag[4][x])) + "\n"
                 f.write(string)
 
+#ez a program szolgál a már elkészített elmozdulás fájlokból a futások létrehozására
+# a két hatásra külön végzi:  "A" rész: forgalmi futások
+#                             "B" rész: hőmérsékleti futások
 def run4():
-    # a napok külön azért kell, mert van hogy bizonyos napokon nem volt rögzítés (pl 2013.08.12-13)
-    napok=[1,2,3,4,5,6,7,8,9,10,11,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+    # a vizsgált év és hónap megadása
+    vizsgaltevhonap = 201308
+    # a napok külön azért kell, hogyha csak pár nap érdekel, azt külön meg lehessen adni,
+    # ekkor a 'for x in napok' kell aktívvá tenni 6 sorral lejjebb
+    napok=[1,18,31]
 
     kiirolistaforg=[] #futások kiírásához
     kiirolistahom=[]
-    # forgalmi futás összegzés és fájlkiíratás
-    for x in napok:
+    # "A" rész: forgalmi futás összegzés és fájlkiíratás
+    # for x in napok:
+    for x in range (1,32):
         if x < 10:
             file_nev = "0" + str(x)
         else:
             file_nev = str(x)
-        path = PATH_ELM + '201308' + file_nev + '_forgelm'
-        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+        path = PATH_ELM + vizsgaltevhonap + file_nev + '_forgelm'
         elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
         forgalmifutas=futas(elmozdulasertekek)
         #a futasok kiíratása (nálam már elkészítve)
-        """with open('201308' + file_nev + '_forgfutas.ret', 'w') as f:
+        with open(vizsgaltevhonap + file_nev + '_forgfutas.ret', 'w') as f:
             for z in range(0, len(forgalmifutas[0])):
                 string1 = ""
                 for y in range(0, len(forgalmifutas)):
                     string = " ".join(map(str, forgalmifutas[y][z])) + " "
                     string1 = string1 + string
-                f.write(string1 + "\n")"""
+                f.write(string1 + "\n")
         kiirolista1=[] # a kiíratáshoz előkészítő lista
         for piller in range (0, len(forgalmifutas)):
             kiirolista1.append(forgalmifutas[piller][len(forgalmifutas[piller])-1])
         kiirolistaforg.append(kiirolista1)
     # ez mindig az utolsó időponthoz tartozó futást írja ki, ezáltal a napi összfutást a forgalomból, sarunként.
-    with open('201308' + file_nev + '_forgfutasnapi.ret', 'w') as f:
+    with open(vizsgaltevhonap + file_nev + '_forgfutasnapi.ret', 'w') as f:
         for z in range(0, len(kiirolistaforg[0])):
             string1 = ""
             for y in range(0, len(kiirolistaforg)):
                 string = " ".join(map(str, kiirolistaforg[y][z])) + " "
                 string1 = string1 + string
             f.write(string1 + "\n")
-    # homérsékleti futás összegzés és fájlkiíratás (ugyanúgy mint az előbb futásra)
-    for x in napok:
+    # "B" rész: homérsékleti futás összegzés és fájlkiíratás (ugyanúgy mint az előbb futásra)
+    # for x in napok:
+    for x in range (1,32):
         if x < 10:
             file_nev = "0" + str(x)
         else:
             file_nev = str(x)
-        path = PATH_ELM + '201308'+ file_nev + '_homelm'
+        path = PATH_ELM + 'vizsgaltevhonap'+ file_nev + '_homelm'
         # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
         elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
         homfutas=futas(elmozdulasertekek)
         #a futasok kiíratása
-        """with open('201309' + file_nev + '_homfutas.ret', 'w') as f:
+        with open('vizsgaltevhonap' + file_nev + '_homfutas.ret', 'w') as f:
             for z in range(0, len(homfutas[0])):
                 string1 = ""
                 for y in range(0, len(homfutas)):
                     string = " ".join(map(str, homfutas[y][z])) + " "
                     string1 = string1 + string
-                f.write(string1 + "\n")"""
+                f.write(string1 + "\n")
         kiirolista2 = []
         for piller in range(0, len(homfutas)):
             kiirolista2.append(homfutas[piller][len(homfutas[piller])-1])
         kiirolistahom.append(kiirolista2)
     # ez mindig az utolsó időponthoz tartozó futást írja ki, ezáltal a napi összfutást a hőmérsékletből, sarunként.
-    with open('201308' + file_nev + '_homfutasnapi.ret', 'w') as f:
+    with open('vizsgaltevhonap' + file_nev + '_homfutasnapi.ret', 'w') as f:
         for z in range(0, len(kiirolistahom[0])):
             string1 = ""
             for y in range(0, len(kiirolistahom)):
@@ -566,4 +593,4 @@ def run4():
 
 if __name__ == '__main__':
 
-    run4()
+    run3()

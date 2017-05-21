@@ -423,8 +423,8 @@ def run2():
 #                                  __init__ fájlban a PATH_SARU elérési útvonala a vizsgált év, hónap dátumára végződjön!
 def run3():
     # a vizsgált év és hónap megadása, módusz bevitele
-    vizsgaltevhonap = 201308
-    vizsgaltidoablak = 180
+    vizsgaltevhonap = "201308"
+    vizsgaltidoablak = 60
     # a mintavétel gyakorisága fél másodperces, ezért beszorzom kettővel.
     vizsgaltidoablak=vizsgaltidoablak*2
     # figyelmeztet, hogy jó fájlból dolgozik-e
@@ -434,10 +434,10 @@ def run3():
         print("A forrásfájl elérési útja helytelen, a dátum nem egyezik! Ellenőrizd a dátumot!")
     # a napok külön azért kell, hogyha csak pár nap érdekel, azt külön meg lehessen adni (teljes hónap vizsgálata esetén
     # figyelni kell arra, hogy a vizsgált hónap hány napos), akkor a 'for x in napok' kell aktívvá tenni 4 sorral lejjebb
-    napok = [1,18,31]
+    napok = [10,11,12,13]
 
-    for x in range(1,32):
-    #for x in (napok):
+    #for x in range(1,32):
+    for x in (napok):
         try:
             if x < 10:
                 file_nev = "0" + str(x)
@@ -474,8 +474,10 @@ def run3():
                         string = " ".join(map(str, elmozdulasertekekkulonbseg[y][z])) + " "
                         string1 = string1 + string
                     f.write(string1 + "\n")
-        except Exception:
+        except FileNotFoundError:
             print("Az adott napra nincsenek adatok: " + str(x))
+        except IndexError:
+            print("Az adott napra nincs teljes adatsor: " + str(x))
 
 # hőmérsékletkülönbségek
 def run_deltaT():
@@ -520,77 +522,93 @@ def saruatlag():
 #                             "B" rész: hőmérsékleti futások
 def run4():
     # a vizsgált év és hónap megadása
-    vizsgaltevhonap = 201308
+    vizsgaltevhonap = "201308"
     # a napok külön azért kell, hogyha csak pár nap érdekel, azt külön meg lehessen adni,
     # ekkor a 'for x in napok' kell aktívvá tenni 6 sorral lejjebb
-    napok=[1,18,31]
+    napok=[10,11,12,13]
 
     kiirolistaforg=[] #futások kiírásához
     kiirolistahom=[]
     # "A" rész: forgalmi futás összegzés és fájlkiíratás
-    # for x in napok:
+    #for x in napok:
     for x in range (1,32):
-        if x < 10:
-            file_nev = "0" + str(x)
-        else:
-            file_nev = str(x)
-        path = PATH_ELM + vizsgaltevhonap + file_nev + '_forgelm'
-        elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
-        forgalmifutas=futas(elmozdulasertekek)
-        #a futasok kiíratása (nálam már elkészítve)
-        with open(vizsgaltevhonap + file_nev + '_forgfutas.ret', 'w') as f:
-            for z in range(0, len(forgalmifutas[0])):
-                string1 = ""
-                for y in range(0, len(forgalmifutas)):
-                    string = " ".join(map(str, forgalmifutas[y][z])) + " "
-                    string1 = string1 + string
-                f.write(string1 + "\n")
-        kiirolista1=[] # a kiíratáshoz előkészítő lista
-        for piller in range (0, len(forgalmifutas)):
-            kiirolista1.append(forgalmifutas[piller][len(forgalmifutas[piller])-1])
-        kiirolistaforg.append(kiirolista1)
+        try:
+            if x < 10:
+                file_nev = "0" + str(x)
+            else:
+                file_nev = str(x)
+            path = PATH_ELM + vizsgaltevhonap + file_nev + '_forgelm'
+            elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
+            forgalmifutas=futas(elmozdulasertekek)
+            #a futasok kiíratása (nálam már elkészítve)
+            with open(vizsgaltevhonap + file_nev + '_forgfutas.ret', 'w') as f:
+                for z in range(0, len(forgalmifutas[0])):
+                    string1 = ""
+                    for y in range(0, len(forgalmifutas)):
+                        string = " ".join(map(str, forgalmifutas[y][z])) + " "
+                        string1 = string1 + string
+                    f.write(string1 + "\n")
+            kiirolista1=[] # a kiíratáshoz előkészítő lista
+            for piller in range (0, len(forgalmifutas)):
+                kiirolista1.append(forgalmifutas[piller][len(forgalmifutas[piller])-1])
+            kiirolistaforg.append(kiirolista1)
+        except FileNotFoundError:
+            print("Az adott napra nincsenek adatok: " + str(x))
+        except IndexError:
+            print("Az adott napra nincs teljes adatsor: " + str(x))
     # ez mindig az utolsó időponthoz tartozó futást írja ki, ezáltal a napi összfutást a forgalomból, sarunként.
-    with open(vizsgaltevhonap + file_nev + '_forgfutasnapi.ret', 'w') as f:
-        for z in range(0, len(kiirolistaforg[0])):
-            string1 = ""
-            for y in range(0, len(kiirolistaforg)):
-                string = " ".join(map(str, kiirolistaforg[y][z])) + " "
-                string1 = string1 + string
-            f.write(string1 + "\n")
-    # "B" rész: homérsékleti futás összegzés és fájlkiíratás (ugyanúgy mint az előbb futásra)
-    # for x in napok:
-    for x in range (1,32):
-        if x < 10:
-            file_nev = "0" + str(x)
-        else:
-            file_nev = str(x)
-        path = PATH_ELM + 'vizsgaltevhonap'+ file_nev + '_homelm'
-        # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
-        elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
-        homfutas=futas(elmozdulasertekek)
-        #a futasok kiíratása
-        with open('vizsgaltevhonap' + file_nev + '_homfutas.ret', 'w') as f:
-            for z in range(0, len(homfutas[0])):
+    try:
+        with open(vizsgaltevhonap + file_nev + '_forgfutasnapi.ret', 'w') as f:
+            for z in range(0, len(kiirolistaforg[0])):
                 string1 = ""
-                for y in range(0, len(homfutas)):
-                    string = " ".join(map(str, homfutas[y][z])) + " "
+                for y in range(0, len(kiirolistaforg)):
+                    string = " ".join(map(str, kiirolistaforg[y][z])) + " "
                     string1 = string1 + string
                 f.write(string1 + "\n")
-        kiirolista2 = []
-        for piller in range(0, len(homfutas)):
-            kiirolista2.append(homfutas[piller][len(homfutas[piller])-1])
-        kiirolistahom.append(kiirolista2)
+    except IndexError:
+        print("Az adott napra nincs teljes adatsor: " + str(x))
+    # "B" rész: homérsékleti futás összegzés és fájlkiíratás (ugyanúgy mint az előbb futásra)
+    for x in napok:
+    #for x in range (1,32):
+        try:
+            if x < 10:
+                file_nev = "0" + str(x)
+            else:
+                file_nev = str(x)
+            path = PATH_ELM + 'vizsgaltevhonap'+ file_nev + '_homelm'
+            # path = 'C:\\Users\\szatm\\PycharmProjects\\oszi\\M0_ho_201309' + str(x)
+            elmozdulasertekek = elm_beolvaso(path) # elmozdulást állít elő pozíciókból
+            homfutas=futas(elmozdulasertekek)
+            #a futasok kiíratása
+            with open('vizsgaltevhonap' + file_nev + '_homfutas.ret', 'w') as f:
+                for z in range(0, len(homfutas[0])):
+                    string1 = ""
+                    for y in range(0, len(homfutas)):
+                        string = " ".join(map(str, homfutas[y][z])) + " "
+                        string1 = string1 + string
+                    f.write(string1 + "\n")
+            kiirolista2 = []
+            for piller in range(0, len(homfutas)):
+                kiirolista2.append(homfutas[piller][len(homfutas[piller])-1])
+            kiirolistahom.append(kiirolista2)
+        except FileNotFoundError:
+            print("Az adott napra nincsenek adatok: " + str(x))
+        except IndexError:
+            print("Az adott napra nincs teljes adatsor: " + str(x))
     # ez mindig az utolsó időponthoz tartozó futást írja ki, ezáltal a napi összfutást a hőmérsékletből, sarunként.
-    with open('vizsgaltevhonap' + file_nev + '_homfutasnapi.ret', 'w') as f:
-        for z in range(0, len(kiirolistahom[0])):
-            string1 = ""
-            for y in range(0, len(kiirolistahom)):
-                string = " ".join(map(str, kiirolistahom[y][z])) + " "
-                string1 = string1 + string
-            f.write(string1 + "\n")
+    try:
+        with open('vizsgaltevhonap' + file_nev + '_homfutasnapi.ret', 'w') as f:
+            for z in range(0, len(kiirolistahom[0])):
+                string1 = ""
+                for y in range(0, len(kiirolistahom)):
+                    string = " ".join(map(str, kiirolistahom[y][z])) + " "
+                    string1 = string1 + string
+                f.write(string1 + "\n")
+    except IndexError:
+        print("Az adott napra nincs teljes adatsor: " + str(x))
 
 
 
 if __name__ == '__main__':
 
-    run3()
+    run4()
